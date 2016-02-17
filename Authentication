@@ -1,0 +1,154 @@
+//create view
+@{
+    ViewBag.Title = "Create";
+}
+
+
+<h2>Create Role</h2>
+@Html.ActionLink("List Roles", "Index") | @Html.ActionLink("Manage User Role", "ManageUserRoles")
+<hr />
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    <div>
+        Role name
+    </div>
+    <p>
+        @Html.TextBox("RoleName")
+    </p>
+    <input type="submit" value="Save" />
+}
+@ViewBag.ResultMessage
+
+//edit view
+@model Microsoft.AspNet.Identity.EntityFramework.IdentityRole
+@{
+    ViewBag.Title = "Edit";
+}
+
+<h2>Edit Role</h2>
+
+@Html.ActionLink("List Roles", "Index") | @Html.ActionLink("Manage User Role", "ManageUserRoles")
+<hr />
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    @Html.HiddenFor(model => model.Id)
+    <div>
+        Role name
+    </div>
+    <p>
+        @Html.TextBoxFor(model => model.Name)
+    </p>
+    <input type="submit" value="Save" />
+}
+
+//index
+@model IEnumerable<Microsoft.AspNet.Identity.EntityFramework.IdentityRole>
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Roles Listing </h2>
+
+@Html.ActionLink("Create New Role", "Create") | @Html.ActionLink("Manage User Role", "ManageUserRoles")
+<hr />
+<div>
+    @foreach (var role in Model)
+    {
+        <p>
+            <strong>@role.Name | </strong>
+            <span onclick="return confirm('Are you sure to delete?')"><a href="/Roles/Delete?RoleName=@role.Name" class="delLink" style="color:red;">Delete</a></span> |
+            @Html.ActionLink("Edit", "Edit", new { roleName = @role.Name })
+        </p>
+    }
+</div>
+
+
+//controller
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using MvcRoles.Models;//add
+using Microsoft.AspNet.Identity.EntityFramework; //add
+namespace MvcRoles.Controllers
+{
+    public class RolesController : Controller
+    {
+        private ApplicationDbContext context = new ApplicationDbContext();
+        // GET: Roles
+        public ActionResult Index()
+        {
+            return View(context.Roles.ToList());
+        }
+
+        public ActionResult Create()
+        {
+
+
+            return View();
+        }
+        [HttpPost]
+        public ActionResult Create(FormCollection collection)
+        {
+            try
+            {
+                context.Roles.Add(new IdentityRole()
+                {
+                    Name = collection["RoleName"]
+                });
+                context.SaveChanges();
+                ViewBag.ResultMessage = "Role created successfully !";
+                return View("Create");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+        public ActionResult Delete(string RoleName)
+        {
+            var thisRole = context.Roles.Where(r => r.Name.Equals(RoleName, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+            context.Roles.Remove(thisRole);
+            context.SaveChanges();
+            return RedirectToAction("Create");
+        }
+
+        //
+        // GET: /Roles/Edit/5
+        public ActionResult Edit(string roleName)
+        {
+            var thisRole = context.Roles.Where(r => r.Name.Equals(roleName, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+
+            return View(thisRole);
+        }
+
+        //
+        // POST: /Roles/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit(Microsoft.AspNet.Identity.EntityFramework.IdentityRole role)
+        {
+            try
+            {
+                context.Entry(role).State = System.Data.Entity.EntityState.Modified;
+                context.SaveChanges();
+
+                return RedirectToAction("Index");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+    }
+}
+
+
+
