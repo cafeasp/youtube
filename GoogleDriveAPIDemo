@@ -30,6 +30,9 @@ namespace GoogleDriveAPIDemo
                 ApplicationName = ApplicationName,
             });
 
+
+            UploadBasicImage("you file full path", service);
+            
             string pageToken = null;
             
             do
@@ -87,6 +90,25 @@ namespace GoogleDriveAPIDemo
             }
 
            
+        }
+
+        private static void UploadBasicImage(string path,DriveService service)
+        {
+            var fileMetadata = new Google.Apis.Drive.v3.Data.File();
+            fileMetadata.Name = Path.GetFileName(path);
+            fileMetadata.MimeType = "image/jpeg";
+            FilesResource.CreateMediaUpload request;
+            using (var stream = new System.IO.FileStream(path,System.IO.FileMode.Open))
+            {
+                request = service.Files.Create(fileMetadata, stream,"image/jpeg");
+                request.Fields = "id";
+                request.Upload();
+            }
+
+            var file = request.ResponseBody;
+
+            Console.WriteLine("File ID: " + file.Id);
+
         }
 
         private static UserCredential GetCredentials()
